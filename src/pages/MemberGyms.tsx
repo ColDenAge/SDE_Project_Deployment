@@ -1,4 +1,3 @@
-
 import React from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import GymPageHeader from "@/components/member-gyms/GymPageHeader";
@@ -15,7 +14,7 @@ const MemberGyms = () => {
       <GymPageHeader />
       <MemberGymStats />
       <ActiveSubscriptions />
-      <ClassSchedules />
+      {<ClassSchedules />}
       <RecentActivities />
       <AvailableGyms />
       <Toaster />

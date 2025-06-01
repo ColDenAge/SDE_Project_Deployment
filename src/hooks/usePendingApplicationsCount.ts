@@ -15,4 +15,4 @@ export function usePendingApplicationsCount() {
   }, []);
 
   return count;
-} 
+}

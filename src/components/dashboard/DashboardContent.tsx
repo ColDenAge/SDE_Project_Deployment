@@ -14,49 +14,99 @@ const DashboardContent: React.FC = () => {
 
   const [upcomingClassesCount, setUpcomingClassesCount] = useState(0);
   const [workoutStreakDays, setWorkoutStreakDays] = useState(0);
+  const [upcomingEnrolledClasses, setUpcomingEnrolledClasses] = useState<any[]>([]);
+  const [scheduledManagerClasses, setScheduledManagerClasses] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!user || userRole !== "member") return;
+    if (!user) return;
 
-    const fetchMemberData = async () => {
-      try {
-        const userDocRef = doc(db, "gym_members", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
+    if (userRole === "member") {
+      const fetchMemberData = async () => {
+        try {
+          const userDocRef = doc(db, "gym_members", user.uid);
+          const userDocSnap = await getDoc(userDocRef);
 
-        if (userDocSnap.exists()) {
-          const userData = userDocSnap.data();
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
 
-          // Fetch and count upcoming classes
-          const enrolledGymIds = userData.enrolledGyms || [];
-          let count = 0;
-          const now = new Date();
+            // Fetch and count upcoming classes
+            const enrolledGymIds = userData.enrolledGyms || [];
+            let count = 0;
+            const now = new Date();
+            let enrolledClasses: any[] = [];
 
-          for (const gymId of enrolledGymIds) {
-            const classesRef = collection(db, "gyms", gymId, "classes");
+            for (const gymId of enrolledGymIds) {
+              const classesRef = collection(db, "gyms", gymId, "classes");
+              const classesSnapshot = await getDocs(classesRef);
+              classesSnapshot.docs.forEach(doc => {
+                const classData = doc.data();
+                const classDateTime = new Date(classData.schedule); // **Needs adjustment based on schedule format**
+                const enrolledMembers = classData.enrolledMembers || [];
+                const isUserEnrolled = enrolledMembers.some((member: any) => member.id === user.uid);
+                if (classDateTime > now && isUserEnrolled) {
+                  count++;
+                  enrolledClasses.push({
+                    id: doc.id,
+                    name: classData.name,
+                    schedule: classData.schedule,
+                    instructor: classData.instructor,
+                    status: 'Booked',
+                  });
+                }
+              });
+            }
+            setUpcomingClassesCount(count);
+            setUpcomingEnrolledClasses(enrolledClasses);
+
+            // Calculate and set workout streak
+            const attendanceHistory = userData.attendanceHistory || [];
+            const streak = calculateWorkoutStreak(attendanceHistory);
+            setWorkoutStreakDays(streak);
+          }
+        } catch (error) {
+          console.error("Error fetching member data:", error);
+        }
+      };
+      fetchMemberData();
+    } else if (userRole === "manager") {
+      // Fetch manager's scheduled classes for today
+      const fetchManagerClasses = async () => {
+        try {
+          // Get gyms owned by this manager
+          const gymsRef = collection(db, "gyms");
+          const gymsSnapshot = await getDocs(query(gymsRef, where("ownerId", "==", user.uid)));
+          const gyms = gymsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const today = new Date();
+          const todayStr = today.toLocaleDateString();
+          let classesToday: any[] = [];
+          for (const gym of gyms) {
+            const classesRef = collection(db, "gyms", gym.id, "classes");
             const classesSnapshot = await getDocs(classesRef);
             classesSnapshot.docs.forEach(doc => {
               const classData = doc.data();
-              // Assuming classData.schedule contains a parsable date/time string
-              // You might need to adjust this based on your actual schedule data structure
-              const classDateTime = new Date(classData.schedule); // **Needs adjustment based on schedule format**
-              if (classDateTime > now) {
-                count++;
+              // Try to match today's date in the schedule string (adjust as needed)
+              const classDate = new Date(classData.schedule);
+              if (
+                classDate.toDateString() === today.toDateString() ||
+                (typeof classData.schedule === 'string' && classData.schedule.includes(today.toLocaleString('en-US', { weekday: 'short' })))
+              ) {
+                classesToday.push({
+                  id: doc.id,
+                  name: classData.name,
+                  schedule: classData.schedule,
+                  instructor: classData.instructor,
+                  status: `${classData.enrolled || 0} attendees`,
+                });
               }
             });
           }
-          setUpcomingClassesCount(count);
-
-          // Calculate and set workout streak
-          const attendanceHistory = userData.attendanceHistory || []; // Assuming attendanceHistory is stored in user data
-          const streak = calculateWorkoutStreak(attendanceHistory);
-          setWorkoutStreakDays(streak);
+          setScheduledManagerClasses(classesToday);
+        } catch (error) {
+          console.error("Error fetching manager classes:", error);
         }
-      } catch (error) {
-        console.error("Error fetching member data:", error);
-      }
-    };
-
-    fetchMemberData();
+      };
+      fetchManagerClasses();
+    }
   }, [user, userRole]);
 
   // TODO: Refine calculateWorkoutStreak to handle potential timezones and inconsistent date formats
@@ -107,7 +157,7 @@ const DashboardContent: React.FC = () => {
 
       {/* Additional Dashboard Sections */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <ClassesList />
+        <ClassesList upcomingClasses={userRole === "member" ? upcomingEnrolledClasses : scheduledManagerClasses} />
         <QuickActions />
       </div>
     </>

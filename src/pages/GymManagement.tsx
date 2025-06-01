@@ -22,6 +22,7 @@ import MembershipPlansTab from "@/components/gym-management/MembershipPlansTab";
 import { initializeMembershipPlans } from "@/components/gym-management/utils/initializeMembershipPlans";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Trash2 } from "lucide-react";
+import { useMyGymsPendingApplications } from "@/hooks/useTotalPendingApplications";
 
 type GymWithStatus = Gym & { computedStatus: string; memberCount: number };
 
@@ -37,6 +38,7 @@ const GymManagement = () => {
   const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [totalMembers, setTotalMembers] = useState(0);
+  const pendingApplications = useMyGymsPendingApplications();
 
   React.useEffect(() => {
     if (!user) return;
@@ -205,7 +207,7 @@ const GymManagement = () => {
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">8</div>
+              <div className="text-2xl font-bold">{pendingApplications}</div>
               <p className="text-xs text-muted-foreground">Require attention</p>
             </CardContent>
           </Card>

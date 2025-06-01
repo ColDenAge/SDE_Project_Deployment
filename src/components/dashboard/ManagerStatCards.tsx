@@ -3,7 +3,7 @@ import { useAuth } from "@/context/AuthProvider";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Calendar, BarChart } from "lucide-react";
+import { Users, Calendar, BarChart, Clock } from "lucide-react";
 import { usePendingApplicationsCount } from '../../hooks/usePendingApplicationsCount';
 
 const ManagerStatCards: React.FC = () => {
@@ -12,7 +12,7 @@ const ManagerStatCards: React.FC = () => {
   const [attendanceRate, setAttendanceRate] = useState(0);
   const [revenue, setRevenue] = useState(0);
   const [newSignups, setNewSignups] = useState(0);
-  const pendingApplicationsCount = usePendingApplicationsCount();
+  const pendingApplicationsCount = usePendingApplicationsCount(user?.uid);
 
   useEffect(() => {
     if (!user) return;
@@ -134,6 +134,18 @@ const ManagerStatCards: React.FC = () => {
         <CardContent>
           <div className="text-2xl font-bold text-[#0B294B]">{newSignups}</div>
           <p className="text-xs text-gray-600">In the last 7 days</p>
+        </CardContent>
+      </Card>
+      <Card className="hover:shadow-md transition-shadow">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-medium text-[#0B294B]">
+            Pending Applications
+          </CardTitle>
+          <Clock className="h-4 w-4 text-[#0B294B]" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-[#0B294B]">{pendingApplicationsCount}</div>
+          <p className="text-xs text-gray-600">Require attention</p>
         </CardContent>
       </Card>
     </div>
