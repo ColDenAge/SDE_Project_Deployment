@@ -1,23 +1,48 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { subscriptionGyms } from "./data/subscriptionData";
-import { GymClass } from "./types/gymTypes";
+import { useAuth } from "@/context/AuthProvider";
+import { collection, getDoc, getDocs, doc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const ClassSchedules = () => {
   const [selectedDay, setSelectedDay] = useState<string>("all");
+  const [enrolledClasses, setEnrolledClasses] = useState<any[]>([]);
+  const { user } = useAuth();
 
-  // Get all classes from subscribed gyms
-  const allClasses = subscriptionGyms.flatMap(gym =>
-    (gym.classes ?? []).map(cls => ({
-      ...cls,
-      gymName: gym.name,
-      gymLocation: gym.location
-    }))
-  );
+  useEffect(() => {
+    const fetchEnrolledClasses = async () => {
+      if (!user) return;
+      // Fetch gyms the user is a member of
+      const userDocRef = doc(db, "gym_members", user.uid);
+      const userDocSnap = await getDoc(userDocRef);
+      if (!userDocSnap.exists()) return;
+      const userData = userDocSnap.data();
+      const enrolledGymIds = userData.enrolledGyms || [];
+      let classes: any[] = [];
+      for (const gymId of enrolledGymIds) {
+        const classesRef = collection(db, "gyms", gymId, "classes");
+        const classesSnapshot = await getDocs(classesRef);
+        classesSnapshot.docs.forEach(doc => {
+          const classData = doc.data();
+          const enrolledMembers = classData.enrolledMembers || [];
+          const isUserEnrolled = enrolledMembers.some((member: any) => member.id === user.uid);
+          if (isUserEnrolled) {
+            classes.push({
+              ...classData,
+              id: doc.id,
+              gymId,
+            });
+          }
+        });
+      }
+      setEnrolledClasses(classes);
+    };
+    fetchEnrolledClasses();
+  }, [user]);
 
   // Extract days from class schedules
   const extractDays = (scheduleText: string) => {
@@ -26,17 +51,15 @@ const ClassSchedules = () => {
   };
 
   // Group classes by day of the week
-  const classesByDay = allClasses.reduce<Record<string, (GymClass & { gymName: string; gymLocation: string })[]>>(
+  const classesByDay = enrolledClasses.reduce<Record<string, any[]>>(
     (acc, cls) => {
       const days = extractDays(cls.schedule);
-
       days.forEach(day => {
         if (!acc[day]) {
           acc[day] = [];
         }
         acc[day].push(cls);
       });
-
       return acc;
     },
     {}
@@ -44,7 +67,7 @@ const ClassSchedules = () => {
 
   // Filter classes based on selected day
   const filteredClasses = selectedDay === "all"
-    ? allClasses
+    ? enrolledClasses
     : classesByDay[selectedDay] || [];
 
   return (
@@ -87,7 +110,6 @@ const ClassSchedules = () => {
                           {cls.enrolled >= cls.capacity ? "Full" : `${cls.capacity - cls.enrolled} spots left`}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">{cls.gymName} - {cls.gymLocation}</p>
                       <p className="text-sm text-muted-foreground">Instructor: {cls.instructor}</p>
                       <div className="flex items-center gap-1 text-sm">
                         <Clock className="h-3.5 w-3.5" />
