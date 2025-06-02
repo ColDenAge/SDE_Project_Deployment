@@ -43,7 +43,7 @@ const GymManagementTabs: React.FC<GymManagementTabsProps> = ({ userRole, gyms })
       <Card>
         <CardHeader className="px-6 pt-6 pb-3">
           <Tabs defaultValue="members" className="w-full" onValueChange={handleTabChange}>
-            <TabsList className="grid w-full md:w-auto grid-cols-3 md:grid-cols-5 md:inline-flex h-auto">
+            <TabsList className="grid w-full md:w-auto grid-cols-3 md:grid-cols-3 md:inline-flex h-auto">
               <TabsTrigger
                 value="members"
                 className={`px-4 py-2 ${activeTab === "members" ? "bg-blue-500 text-white" : ""}`}
@@ -52,25 +52,11 @@ const GymManagementTabs: React.FC<GymManagementTabsProps> = ({ userRole, gyms })
                 Members
               </TabsTrigger>
               <TabsTrigger
-                value="gyms"
-                className={`px-4 py-2 ${activeTab === "gyms" ? "bg-blue-500 text-white" : ""}`}
-              >
-                <Dumbbell className="h-4 w-4 mr-2 hidden md:inline" />
-                Gyms
-              </TabsTrigger>
-              <TabsTrigger
                 value="amenities"
                 className={`px-4 py-2 ${activeTab === "amenities" ? "bg-blue-500 text-white" : ""}`}
               >
                 <List className="h-4 w-4 mr-2 hidden md:inline" />
                 Amenities
-              </TabsTrigger>
-              <TabsTrigger
-                value="classes"
-                className={`px-4 py-2 ${activeTab === "classes" ? "bg-blue-500 text-white" : ""}`}
-              >
-                <Calendar className="h-4 w-4 mr-2 hidden md:inline" />
-                Classes
               </TabsTrigger>
               <TabsTrigger
                 value="membership-plans"
@@ -91,10 +77,6 @@ const GymManagementTabs: React.FC<GymManagementTabsProps> = ({ userRole, gyms })
 
             <TabsContent value="amenities" className="pt-4">
               <AmenitiesTab gymId={selectedGym?.id} />
-            </TabsContent>
-
-            <TabsContent value="classes" className="pt-4">
-              <ClassesTab gymId={selectedGym?.id} />
             </TabsContent>
 
             <TabsContent value="membership-plans" className="mt-4">

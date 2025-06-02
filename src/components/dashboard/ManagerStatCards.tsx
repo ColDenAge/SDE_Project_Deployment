@@ -3,7 +3,7 @@ import { useAuth } from "@/context/AuthProvider";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Calendar, BarChart, Clock } from "lucide-react";
+import { Users, BarChart, Clock } from "lucide-react";
 import { usePendingApplicationsCount } from '../../hooks/usePendingApplicationsCount';
 
 const ManagerStatCards: React.FC = () => {
@@ -12,7 +12,7 @@ const ManagerStatCards: React.FC = () => {
   const [attendanceRate, setAttendanceRate] = useState(0);
   const [revenue, setRevenue] = useState(0);
   const [newSignups, setNewSignups] = useState(0);
-  const pendingApplicationsCount = usePendingApplicationsCount(user?.uid);
+  const pendingApplicationsCount = usePendingApplicationsCount();
 
   useEffect(() => {
     if (!user) return;
@@ -98,18 +98,6 @@ const ManagerStatCards: React.FC = () => {
         <CardContent>
           <div className="text-2xl font-bold text-[#0B294B]">{totalActiveMembers}</div>
           <p className="text-xs text-gray-600">{totalActiveMembers === 0 ? '' : '7% increase from last month'}</p>
-        </CardContent>
-      </Card>
-      <Card className="hover:shadow-md transition-shadow">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-sm font-medium text-[#0B294B]">
-            Class Attendance
-          </CardTitle>
-          <Calendar className="h-4 w-4 text-[#0B294B]" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-[#0B294B]">{attendanceRate}%</div>
-          <p className="text-xs text-gray-600">Average attendance rate</p>
         </CardContent>
       </Card>
       <Card className="hover:shadow-md transition-shadow">
