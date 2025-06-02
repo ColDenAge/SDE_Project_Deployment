@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Gym, GymClass } from "./types/gymTypes";
 import EnrollClassDialog from "./EnrollClassDialog";
-import GymDetailsTabs from "./GymDetailsTabs";
+import GymDetailsContent from "./GymDetailsContent";
 
 interface GymDetailsDialogProps {
   isOpen: boolean;
@@ -50,10 +50,11 @@ const GymDetailsDialog: React.FC<GymDetailsDialogProps> = ({
 
           {gym && (
             <div className="flex-grow overflow-hidden">
-              <GymDetailsTabs
+              <GymDetailsContent
                 gym={gym}
+                hasApplied={canEnroll}
                 onEnrollClass={handleEnrollClick}
-                canEnroll={canEnroll}
+                onSelectMembership={() => {}}
               />
             </div>
           )}

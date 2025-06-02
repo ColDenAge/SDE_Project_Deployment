@@ -5,9 +5,12 @@ import { Calendar, Dumbbell, Receipt, CreditCard } from "lucide-react";
 interface MemberStatCardsProps {
   upcomingClassesCount: number;
   workoutStreakDays: number | string;
+  membershipPrice: number;
+  nextPaymentDate: string;
+  totalBillsPaid: number;
 }
 
-const MemberStatCards: React.FC<MemberStatCardsProps> = ({ upcomingClassesCount, workoutStreakDays }) => {
+const MemberStatCards: React.FC<MemberStatCardsProps> = ({ upcomingClassesCount, workoutStreakDays, membershipPrice, nextPaymentDate, totalBillsPaid }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <Card className="hover:shadow-md transition-shadow">
@@ -42,8 +45,8 @@ const MemberStatCards: React.FC<MemberStatCardsProps> = ({ upcomingClassesCount,
           <CreditCard className="h-4 w-4 text-[#0B294B]" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-[#0B294B]">May 15</div>
-          <p className="text-xs text-gray-600">$49.99 Monthly Membership</p>
+          <div className="text-2xl font-bold text-[#0B294B]">{nextPaymentDate || '-'}</div>
+          <p className="text-xs text-gray-600">${membershipPrice?.toFixed(2) || '-'} Monthly Membership</p>
         </CardContent>
       </Card>
       <Card className="hover:shadow-md transition-shadow">
@@ -54,7 +57,7 @@ const MemberStatCards: React.FC<MemberStatCardsProps> = ({ upcomingClassesCount,
           <Receipt className="h-4 w-4 text-[#0B294B]" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-[#0B294B]">$149.97</div>
+          <div className="text-2xl font-bold text-[#0B294B]">${totalBillsPaid?.toFixed(2) || '0.00'}</div>
           <p className="text-xs text-gray-600">This month</p>
         </CardContent>
       </Card>

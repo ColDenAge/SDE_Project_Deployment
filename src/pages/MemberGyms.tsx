@@ -14,8 +14,8 @@ const MemberGyms = () => {
       <GymPageHeader />
       <MemberGymStats />
       <ActiveSubscriptions />
-      {<ClassSchedules />}
-      <RecentActivities />
+      {/*<ClassSchedules />*/}
+      {/*<RecentActivities />*/}
       <AvailableGyms />
       <Toaster />
     </DashboardLayout>

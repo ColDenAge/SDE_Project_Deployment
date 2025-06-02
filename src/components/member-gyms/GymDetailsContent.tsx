@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CalendarIcon, AlertCircle } from "lucide-react";
+import { CalendarIcon, AlertCircle, MapPin, Phone, Mail } from "lucide-react";
 import { Gym, GymClass, MembershipOption } from "./types/gymTypes";
 import { useToast } from "@/hooks/use-toast";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { RoleContext } from "../../router/App";
 
 interface GymDetailsContentProps {
   gym: Gym;
@@ -23,6 +24,7 @@ const GymDetailsContent: React.FC<GymDetailsContentProps> = ({
 }) => {
   const { toast } = useToast();
   const [amenities, setAmenities] = useState<any[]>([]);
+  const { userRole } = useContext(RoleContext);
 
   useEffect(() => {
     const fetchAmenities = async () => {
@@ -37,6 +39,42 @@ const GymDetailsContent: React.FC<GymDetailsContentProps> = ({
     };
     fetchAmenities();
   }, [gym?.id]);
+
+  // General info block
+  const renderGeneralInfo = () => (
+    <div className="mb-6">
+      <h2 className="text-2xl font-bold mb-1">{gym.name}</h2>
+      <div className="text-gray-500 mb-2">{gym.location}</div>
+      <div className="flex flex-col gap-1 text-sm text-gray-700">
+        {gym.contact && (
+          <div className="flex items-center gap-2"><Phone className="h-4 w-4" /> {gym.contact}</div>
+        )}
+        {gym.email && (
+          <div className="flex items-center gap-2"><Mail className="h-4 w-4" /> {gym.email}</div>
+        )}
+        {gym.address && (
+          <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {gym.address}</div>
+        )}
+      </div>
+    </div>
+  );
+
+  if (userRole === 'member') {
+    // Only show general info and amenities for members
+    return (
+      <div>
+        {renderGeneralInfo()}
+        <h3 className="text-lg font-medium mb-2">Available Amenities</h3>
+        <div className="grid grid-cols-2 gap-4">
+          {amenities.length > 0 ? amenities.map((amenity, index) => (
+            <div key={index} className="p-4 border rounded-lg">
+              <p className="font-medium">{amenity.name || amenity}</p>
+            </div>
+          )) : <p className="col-span-2 text-center text-muted-foreground">No amenities found.</p>}
+        </div>
+      </div>
+    );
+  }
 
   const handleEnrollClick = (gymClass: GymClass) => {
     if (!hasApplied) {

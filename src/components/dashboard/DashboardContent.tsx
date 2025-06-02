@@ -16,6 +16,9 @@ const DashboardContent: React.FC = () => {
   const [workoutStreakDays, setWorkoutStreakDays] = useState(0);
   const [upcomingEnrolledClasses, setUpcomingEnrolledClasses] = useState<any[]>([]);
   const [scheduledManagerClasses, setScheduledManagerClasses] = useState<any[]>([]);
+  const [membershipPrice, setMembershipPrice] = useState(0);
+  const [nextPaymentDate, setNextPaymentDate] = useState('');
+  const [totalBillsPaid, setTotalBillsPaid] = useState(0);
 
   useEffect(() => {
     if (!user) return;
@@ -62,6 +65,61 @@ const DashboardContent: React.FC = () => {
             const attendanceHistory = userData.attendanceHistory || [];
             const streak = calculateWorkoutStreak(attendanceHistory);
             setWorkoutStreakDays(streak);
+
+            // Fetch active subscription (membership price and next payment)
+            let foundMembershipPrice = 0;
+            let foundNextPaymentDate = '';
+            let foundPlanDuration = '';
+            let foundPlanName = '';
+            for (const gymId of enrolledGymIds) {
+              const membersRef = collection(db, "gyms", gymId, "members");
+              const memberQuery = query(membersRef, where("memberId", "==", user.uid), where("status", "==", "active"));
+              const memberSnapshot = await getDocs(memberQuery);
+              if (!memberSnapshot.empty) {
+                const memberData = memberSnapshot.docs[0].data();
+                foundPlanName = memberData.membershipType;
+                // Fetch gym to get plan price
+                const gymRef = doc(db, "gyms", gymId);
+                const gymSnap = await getDoc(gymRef);
+                if (gymSnap.exists()) {
+                  const gymData = gymSnap.data();
+                  const plan = (gymData.membershipPlans || gymData.membershipOptions || []).find((p: any) => p.name === foundPlanName);
+                  if (plan) {
+                    foundMembershipPrice = plan.price || 0;
+                    foundPlanDuration = plan.duration || '';
+                  }
+                }
+                // Next payment date (use endDate or joinedAt + duration if available)
+                if (memberData.endDate) {
+                  foundNextPaymentDate = new Date(memberData.endDate).toLocaleDateString();
+                }
+                break; // Use the first active subscription found
+              }
+            }
+            setMembershipPrice(foundMembershipPrice);
+            setNextPaymentDate(foundNextPaymentDate);
+
+            // Fetch total bills paid for this month
+            const nowDate = new Date();
+            const thisMonth = nowDate.getMonth();
+            const thisYear = nowDate.getFullYear();
+            const paymentsQ = query(
+              collection(db, "payments"),
+              where("userId", "==", user.uid),
+              where("status", "==", "Paid")
+            );
+            const paymentsSnap = await getDocs(paymentsQ);
+            let totalPaid = 0;
+            paymentsSnap.docs.forEach(doc => {
+              const data = doc.data();
+              if (data.date) {
+                const paidDate = new Date(data.date);
+                if (paidDate.getFullYear() === thisYear && paidDate.getMonth() === thisMonth) {
+                  totalPaid += Number(data.amount) || 0;
+                }
+              }
+            });
+            setTotalBillsPaid(totalPaid);
           }
         } catch (error) {
           console.error("Error fetching member data:", error);
@@ -153,11 +211,23 @@ const DashboardContent: React.FC = () => {
   return (
     <>
       {/* Stats Cards - Conditionally rendered based on role */}
-      {userRole === "member" ? <MemberStatCards upcomingClassesCount={upcomingClassesCount} workoutStreakDays={workoutStreakDays} /> : <ManagerStatCards />}
+      {userRole === "member" ? (
+        <MemberStatCards
+          upcomingClassesCount={upcomingClassesCount}
+          workoutStreakDays={workoutStreakDays}
+          membershipPrice={membershipPrice}
+          nextPaymentDate={nextPaymentDate}
+          totalBillsPaid={totalBillsPaid}
+        />
+      ) : (
+        <ManagerStatCards />
+      )}
 
       {/* Additional Dashboard Sections */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <ClassesList upcomingClasses={userRole === "member" ? upcomingEnrolledClasses : scheduledManagerClasses} />
+        {userRole === "manager" && (
+          <ClassesList upcomingClasses={scheduledManagerClasses} />
+        )}
         <QuickActions />
       </div>
     </>
