@@ -1,3 +1,4 @@
+// Dummy change to update commit timestamp
 import React, { useContext, useState } from "react";
 import { RoleContext } from "../../router/App";
 import { useAuth } from "@/context/AuthProvider";
@@ -17,6 +18,8 @@ const ProfileSection = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [gcashQrUrl, setGcashQrUrl] = useState("");
   const [gotymeQrUrl, setGotymeQrUrl] = useState("");
+  const [gcashNumber, setGcashNumber] = useState("");
+  const [gotymeNumber, setGotymeNumber] = useState("");
 
   React.useEffect(() => {
     if (!user) return;
@@ -28,6 +31,8 @@ const ProfileSection = () => {
         if (data.fullName) setFullName(data.fullName);
         if (data.gcashQrUrl) setGcashQrUrl(data.gcashQrUrl);
         if (data.gotymeQrUrl) setGotymeQrUrl(data.gotymeQrUrl);
+        if (data.gcashNumber) setGcashNumber(data.gcashNumber);
+        if (data.gotymeNumber) setGotymeNumber(data.gotymeNumber);
       } else if (user.displayName) {
         setFullName(user.displayName);
       }
@@ -60,6 +65,8 @@ const ProfileSection = () => {
       const userDoc = doc(db, "users", user.uid);
       await setDoc(userDoc, {
         fullName: fullName,
+        gcashNumber: gcashNumber,
+        gotymeNumber: gotymeNumber,
         updatedAt: new Date().toISOString()
       }, { merge: true });
       firestoreSuccess = true;
@@ -105,16 +112,40 @@ const ProfileSection = () => {
   return (
     <div className="bg-white rounded-lg shadow-lg p-6">
       <h2 className="text-2xl font-bold text-[#0B294B] mb-6">Profile Settings</h2>
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">GCash QR Code</label>
-        {gcashQrUrl && <img src={gcashQrUrl} alt="GCash QR" className="h-32 mb-2" />}
-        <input type="file" accept="image/*" onChange={e => handleQrUpload(e, 'gcash')} />
-      </div>
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">GoTyme QR Code</label>
-        {gotymeQrUrl && <img src={gotymeQrUrl} alt="GoTyme QR" className="h-32 mb-2" />}
-        <input type="file" accept="image/*" onChange={e => handleQrUpload(e, 'gotyme')} />
-      </div>
+      {userRole !== 'member' && (
+        <>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">GCash QR Code</label>
+            {gcashQrUrl && <img src={gcashQrUrl} alt="GCash QR" className="h-32 mb-2" />}
+            <input type="file" accept="image/*" onChange={e => handleQrUpload(e, 'gcash')} />
+          </div>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">GCash Number</label>
+            <input
+              type="text"
+              value={gcashNumber}
+              onChange={e => setGcashNumber(e.target.value)}
+              placeholder="Enter GCash Number"
+              className="w-full border rounded px-3 py-2"
+            />
+          </div>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">GoTyme QR Code</label>
+            {gotymeQrUrl && <img src={gotymeQrUrl} alt="GoTyme QR" className="h-32 mb-2" />}
+            <input type="file" accept="image/*" onChange={e => handleQrUpload(e, 'gotyme')} />
+          </div>
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">GoTyme Number</label>
+            <input
+              type="text"
+              value={gotymeNumber}
+              onChange={e => setGotymeNumber(e.target.value)}
+              placeholder="Enter GoTyme Number"
+              className="w-full border rounded px-3 py-2"
+            />
+          </div>
+        </>
+      )}
       <ProfileForm
         fullName={fullName}
         onFullNameChange={setFullName}

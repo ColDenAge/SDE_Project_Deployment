@@ -1,23 +1,8 @@
 import React, { useRef, useState, useEffect } from "react";
 import { storage, db } from "@/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { collection, addDoc, serverTimestamp, getDocs, query, where } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { useAuth } from "@/context/AuthProvider";
-
-const PAYMENT_METHODS = [
-  {
-    name: "GCash",
-    number: "0927-420-3298",
-    account: "ADRIANE BECERA LOQUINTE",
-    qr: "/qr/gcash.png",
-  },
-  {
-    name: "GoTyme",
-    number: "0153 0708 4962",
-    account: "ADRIANE BECERA LOQUINTE",
-    qr: "/qr/gotyme.png",
-  },
-];
 
 const ManualPaymentSection = () => {
   const [uploading, setUploading] = useState(false);
@@ -28,13 +13,14 @@ const ManualPaymentSection = () => {
   const { user } = useAuth();
   const [userGyms, setUserGyms] = useState<any[]>([]);
   const [selectedGymId, setSelectedGymId] = useState("");
+  const [ownerPaymentInfo, setOwnerPaymentInfo] = useState<any>(null);
 
   useEffect(() => {
     // Fetch all gyms for the dropdown
     const fetchGyms = async () => {
       const gymsRef = collection(db, "gyms");
       const snapshot = await getDocs(gymsRef);
-      setUserGyms(snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name })));
+      setUserGyms(snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name, ownerId: doc.data().ownerId })));
     };
     fetchGyms();
   }, []);
@@ -44,6 +30,28 @@ const ManualPaymentSection = () => {
       setSelectedGymId(userGyms[0].id);
     }
   }, [userGyms]);
+
+  useEffect(() => {
+    const fetchOwnerPaymentInfo = async () => {
+      if (!selectedGymId) {
+        setOwnerPaymentInfo(null);
+        return;
+      }
+      const gym = userGyms.find(g => g.id === selectedGymId);
+      if (!gym || !gym.ownerId) {
+        setOwnerPaymentInfo(null);
+        return;
+      }
+      const ownerDoc = doc(db, "users", gym.ownerId);
+      const ownerSnap = await getDoc(ownerDoc);
+      if (ownerSnap.exists()) {
+        setOwnerPaymentInfo(ownerSnap.data());
+      } else {
+        setOwnerPaymentInfo(null);
+      }
+    };
+    fetchOwnerPaymentInfo();
+  }, [selectedGymId, userGyms]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -105,13 +113,24 @@ const ManualPaymentSection = () => {
             <option key={gym.id} value={gym.id}>{gym.name}</option>
           ))}
         </select>
-        {PAYMENT_METHODS.map((method) => (
-          <div key={method.name} className="mb-4">
-            <div className="font-medium">{method.name}</div>
-            <div>{method.number}</div>
-            <div className="text-xs text-gray-600">Account Name: {method.account}</div>
-          </div>
-        ))}
+        {ownerPaymentInfo ? (
+          <>
+            <div className="mb-4">
+              <div className="font-medium">GCash</div>
+              <div>{ownerPaymentInfo.gcashNumber || 'No number set'}</div>
+              <div className="text-xs text-gray-600">Account Name: {ownerPaymentInfo.fullName || 'N/A'}</div>
+            </div>
+            <div className="mb-4">
+              <div className="font-medium">GoTyme</div>
+              <div>{ownerPaymentInfo.gotymeNumber || 'No number set'}</div>
+              <div className="text-xs text-gray-600">Account Name: {ownerPaymentInfo.fullName || 'N/A'}</div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="mb-4">Select a gym to see payment info.</div>
+          </>
+        )}
         <div className="mt-4">
           <label className="block font-medium mb-1">Upload Payment Receipt</label>
           <input
@@ -139,12 +158,18 @@ const ManualPaymentSection = () => {
       <div className="flex flex-col items-center gap-4">
         <div className="font-medium mb-2">Scan QR Code</div>
         <div className="flex gap-4">
-          {PAYMENT_METHODS.map((method) => (
-            <div key={method.name} className="flex flex-col items-center">
-              <img src={method.qr} alt={method.name + " QR"} className="w-24 h-24 object-contain border rounded mb-1" />
-              <span className="text-xs">{method.name}</span>
+          {ownerPaymentInfo && ownerPaymentInfo.gcashQrUrl && (
+            <div className="flex flex-col items-center">
+              <img src={ownerPaymentInfo.gcashQrUrl} alt="GCash QR" className="w-24 h-24 object-contain border rounded mb-1" />
+              <span className="text-xs">GCash</span>
             </div>
-          ))}
+          )}
+          {ownerPaymentInfo && ownerPaymentInfo.gotymeQrUrl && (
+            <div className="flex flex-col items-center">
+              <img src={ownerPaymentInfo.gotymeQrUrl} alt="GoTyme QR" className="w-24 h-24 object-contain border rounded mb-1" />
+              <span className="text-xs">GoTyme</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
