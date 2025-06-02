@@ -7,6 +7,20 @@ import QuickActions from "./QuickActions";
 import { useAuth } from "@/context/AuthProvider";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { Calendar } from "@/components/ui/calendar";
+
+const quotesAndTips = [
+  "Success is the sum of small efforts, repeated day in and day out.",
+  "Tip: Encourage members to stay hydrated!",
+  "Motivation is what gets you started. Habit is what keeps you going.",
+  "Tip: Consistency is key to achieving your fitness goals.",
+  "The only bad workout is the one that didn't happen.",
+  "Tip: Remember to stretch before and after your workouts.",
+];
+
+function getRandomQuoteOrTip() {
+  return quotesAndTips[Math.floor(Math.random() * quotesAndTips.length)];
+}
 
 const DashboardContent: React.FC = () => {
   const { userRole } = useContext(RoleContext);
@@ -19,6 +33,7 @@ const DashboardContent: React.FC = () => {
   const [membershipPrice, setMembershipPrice] = useState(0);
   const [nextPaymentDate, setNextPaymentDate] = useState('');
   const [totalBillsPaid, setTotalBillsPaid] = useState(0);
+  const [signUpDates, setSignUpDates] = useState<Date[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -164,6 +179,30 @@ const DashboardContent: React.FC = () => {
         }
       };
       fetchManagerClasses();
+
+      // Fetch all members for manager's gyms and extract join dates
+      const fetchSignUpDates = async () => {
+        const gymsRef = collection(db, "gyms");
+        const gymsSnapshot = await getDocs(query(gymsRef, where("ownerId", "==", user.uid)));
+        const gyms = gymsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        let dates: Date[] = [];
+        for (const gym of gyms) {
+          const membersRef = collection(db, "gyms", gym.id, "members");
+          const membersSnapshot = await getDocs(membersRef);
+          membersSnapshot.docs.forEach(doc => {
+            const data = doc.data();
+            if (data.joinDate) {
+              const d = new Date(data.joinDate);
+              if (!isNaN(d.getTime())) dates.push(d);
+            } else if (data.joinedAt) {
+              const d = new Date(data.joinedAt);
+              if (!isNaN(d.getTime())) dates.push(d);
+            }
+          });
+        }
+        setSignUpDates(dates);
+      };
+      fetchSignUpDates();
     }
   }, [user, userRole]);
 
@@ -224,11 +263,30 @@ const DashboardContent: React.FC = () => {
       )}
 
       {/* Additional Dashboard Sections */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
         {userRole === "manager" && (
           <ClassesList upcomingClasses={scheduledManagerClasses} />
         )}
-        <QuickActions />
+        <div className="md:col-span-1 min-w-[280px]">
+          <QuickActions />
+        </div>
+        <div className="md:col-span-2 min-w-[320px]">
+          {/* Calendar showing member sign-up dates */}
+          <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center justify-center h-full min-h-[120px] w-full">
+            <span className="text-lg font-semibold text-[#0B294B] mb-2 text-center w-full">Member Sign-Up Calendar</span>
+            <div className="w-full">
+              <Calendar
+                mode="multiple"
+                selected={signUpDates}
+                modifiers={{ signUp: signUpDates }}
+                modifiersClassNames={{ signUp: "bg-blue-200 text-blue-900" }}
+                showOutsideDays
+                className="w-full"
+              />
+            </div>
+            <span className="text-xs text-gray-500 mt-2">Highlighted dates show when members signed up.</span>
+          </div>
+        </div>
       </div>
     </>
   );

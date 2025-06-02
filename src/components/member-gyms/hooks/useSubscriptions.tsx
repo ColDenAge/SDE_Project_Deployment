@@ -51,7 +51,7 @@ export function useSubscriptions() {
               gymName: gym.name,
               membershipType: memberData.membershipType,
               startDate: memberData.joinedAt ? new Date(memberData.joinedAt).toLocaleDateString() : '-',
-              nextPayment: '-', // You might want to add payment tracking
+              nextPayment: memberData.endDate ? new Date(memberData.endDate).toLocaleDateString() : '-',
               status: 'active',
               location: gym.location,
               availablePlans: gym.membershipPlans?.map((plan: any) => ({

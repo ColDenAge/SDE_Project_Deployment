@@ -13,13 +13,9 @@ const Billings = () => {
       <BillingHeader />
       <UserNotifications />
       <ManualPaymentSection />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="md:col-span-2">
-          <CurrentSubscriptions />
-          <BillingHistory />
-        </div>
+      <div className="grid grid-cols-1 gap-6 mb-8">
         <div>
-          <PaymentMethods />
+          <CurrentSubscriptions />
         </div>
       </div>
     </DashboardLayout>

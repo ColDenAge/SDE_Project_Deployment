@@ -87,8 +87,8 @@ const ManagerStatCards: React.FC = () => {
   }, [user]);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <Card className="hover:shadow-md transition-shadow">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-8 w-full">
+      <Card className="hover:shadow-md transition-shadow w-full">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-[#0B294B]">
             Active Members
@@ -100,7 +100,7 @@ const ManagerStatCards: React.FC = () => {
           <p className="text-xs text-gray-600">{totalActiveMembers === 0 ? '' : '7% increase from last month'}</p>
         </CardContent>
       </Card>
-      <Card className="hover:shadow-md transition-shadow">
+      <Card className="hover:shadow-md transition-shadow w-full">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-[#0B294B]">
             Revenue
@@ -112,7 +112,7 @@ const ManagerStatCards: React.FC = () => {
           <p className="text-xs text-gray-600">Month to date</p>
         </CardContent>
       </Card>
-      <Card className="hover:shadow-md transition-shadow">
+      <Card className="hover:shadow-md transition-shadow w-full">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-[#0B294B]">
             New Sign-ups
@@ -124,7 +124,7 @@ const ManagerStatCards: React.FC = () => {
           <p className="text-xs text-gray-600">In the last 7 days</p>
         </CardContent>
       </Card>
-      <Card className="hover:shadow-md transition-shadow">
+      <Card className="hover:shadow-md transition-shadow w-full">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-medium text-[#0B294B]">
             Pending Applications
